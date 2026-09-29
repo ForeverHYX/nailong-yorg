@@ -568,10 +568,12 @@ function updateCouriers(dt) {
       if (mine.stall && mine.stall.dead && c.mode === 'load' && mine.buffer <= 0) { couriers.splice(i, 1); continue; }
       if (c.mode === 'load') {
         c.timer -= dt;
-        if (mine.buffer >= 4 || (mine.stall && mine.stall.dead && mine.buffer > 0)) {
+        if (mine.buffer >= 4 || (mine.stall && mine.stall.dead && mine.buffer > 0.01)) {
           const st = nearestStorage(c.fx, c.fy);
-          if (st && requestPath(c, st.x, st.y)) { c.mode = 'go'; c.batch = Math.min(Math.floor(mine.buffer), 20); }
+          if (st && requestPath(c, st.x, st.y)) { c.mode = 'go'; c.batch = Math.min(mine.buffer, 20); }
           else c.timer = 1.5;
+        } else if (mine.stall && mine.stall.dead && mine.buffer <= 0.01) {
+          couriers.splice(i, 1); continue;   // 商家打烊且无残单，袋鼠收工
         } else if (c.timer <= 0) {
           c.timer = 0.8;
         }

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>奶龙围城 · 袋鼠外卖保卫战（YORG.io 魔改版）</title>
+<style>
+  :root{
+    --yellow:#FFD100; --dark:#17181c; --panel:#22242b; --panel2:#2b2e37;
+    --text:#f2f3f7; --muted:#9aa0ad; --green:#7ed957; --red:#ff5f5f;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-user-select:none; user-select:none;}
+  html,body{height:100%;}
+  body{
+    background:radial-gradient(1200px 700px at 50% -10%, #2a2d38, #14151a 70%);
+    color:var(--text); font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+  }
+  #app{display:flex; flex-direction:column; gap:8px; padding:10px; max-height:100vh;}
+
+  /* ===== 顶栏 ===== */
+  #topbar{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .chip{
+    background:var(--panel); border:1px solid #34373f; border-radius:12px;
+    padding:5px 12px; font-size:14px; font-weight:600; display:flex; align-items:center; gap:6px;
+    box-shadow:0 2px 8px rgba(0,0,0,.35);
+  }
+  .chip .big{font-size:16px; color:var(--yellow);}
+  #hqHpWrap{width:150px; height:10px; background:#3a3d46; border-radius:6px; overflow:hidden;}
+  #hqHpBar{height:100%; width:100%; background:linear-gradient(90deg,#7ed957,#4fc95a); transition:width .2s;}
+  button{
+    background:var(--panel2); color:var(--text); border:1px solid #3c404b; border-radius:10px;
+    padding:5px 12px; font-size:14px; cursor:pointer; font-family:inherit; font-weight:600;
+  }
+  button:hover{background:#343846;}
+  button:disabled{opacity:.45; cursor:not-allowed;}
+  button.primary{background:var(--yellow); color:#1b1b1b; border-color:#e6b800; font-size:16px; padding:10px 28px;}
+  button.primary:hover{background:#ffdf3d;}
+  #skipDayBtn{background:#3d5be0; border-color:#5471ff;}
+  #skipDayBtn:hover{background:#4a67f0;}
+
+  /* ===== 主区域 ===== */
+  #main{position:relative; line-height:0;}
+  canvas{
+    background:#7db95a; border-radius:14px; border:3px solid #2e2f36;
+    box-shadow:0 12px 40px rgba(0,0,0,.5); cursor:pointer; display:block;
+    max-width:calc(100vw - 24px); max-height:calc(100vh - 170px);
+  }
+
+  /* ===== 横幅公告 ===== */
+  #banner{
+    position:absolute; top:14%; left:50%; transform:translateX(-50%);
+    text-align:center; pointer-events:none; opacity:0; line-height:1.4;
+    padding:14px 34px; background:rgba(15,17,26,0.62); border-radius:18px;
+    box-shadow:0 6px 24px rgba(0,0,0,0.35); backdrop-filter:blur(3px);
+  }
+  #banner.show{animation:bannerIn 5s ease forwards;}
+  #banner h2{
+    font-size:34px; color:#fff; text-shadow:0 3px 0 rgba(0,0,0,.45), 0 0 24px rgba(255,209,0,.55);
+    letter-spacing:2px;
+  }
+  #banner p{font-size:15px; color:#ffe9a8; text-shadow:0 2px 4px rgba(0,0,0,.6); font-weight:600;}
+  @keyframes bannerIn{
+    0%{opacity:0; transform:translateX(-50%) scale(.7);}
+    12%{opacity:1; transform:translateX(-50%) scale(1.05);}
+    18%{transform:translateX(-50%) scale(1);}
+    80%{opacity:1;}
+    100%{opacity:0;}
+  }
+
+  /* ===== 提示条 ===== */
+  #hint{
+    position:absolute; bottom:12px; left:50%; transform:translateX(-50%);
+    background:rgba(20,22,30,.88); border:1px solid #4a4e5c; border-radius:20px;
+    padding:7px 18px; font-size:14px; font-weight:600; color:#ffe27a; white-space:nowrap;
+    pointer-events:none; display:none; line-height:1.4; box-shadow:0 4px 14px rgba(0,0,0,.4);
+  }
+
+  /* ===== 底部建造栏 ===== */
+  #buildbar{display:flex; gap:8px; align-items:stretch; justify-content:center; flex-wrap:wrap;}
+  .card{
+    width:88px; background:var(--panel); border:2px solid #363943; border-radius:12px;
+    padding:6px 4px 5px; cursor:pointer; text-align:center; position:relative;
+    transition:transform .08s, border-color .08s;
+  }
+  .card:hover{transform:translateY(-2px); border-color:#565b6b;}
+  .card.sel{border-color:var(--yellow); background:#33322a; box-shadow:0 0 12px rgba(255,209,0,.35);}
+  .card.poor{opacity:.5;}
+  .card .ico{font-size:26px; line-height:1.1;}
+  .card .nm{font-size:12px; font-weight:700; margin:2px 0 1px;}
+  .card .pr{font-size:12px; color:var(--yellow); font-weight:700;}
+  .card .key{
+    position:absolute; top:3px; left:5px; font-size:10px; color:#8b8f9c; font-weight:800;
+  }
+  #sellBtn.sel{border-color:var(--red); background:#3a2626; box-shadow:0 0 12px rgba(255,95,95,.35);}
+  .tooltip{
+    position:fixed; z-index:60; background:#101116; border:1px solid #4a4e5c; border-radius:10px;
+    padding:8px 12px; font-size:13px; max-width:230px; pointer-events:none; display:none;
+    line-height:1.5; box-shadow:0 8px 24px rgba(0,0,0,.5);
+  }
+  .tooltip b{color:var(--yellow);}
+  .tooltip .d{color:var(--muted); font-size:12px;}
+
+  /* ===== 建筑信息面板 ===== */
+  #infoPanel{
+    position:absolute; top:10px; right:10px; width:200px;
+    background:rgba(24,26,33,.94); border:1px solid #454956; border-radius:14px;
+    padding:12px; display:none; line-height:1.5; box-shadow:0 10px 30px rgba(0,0,0,.5);
+  }
+  #infoPanel h3{font-size:16px; color:var(--yellow);}
+  #infoPanel .lv{color:#9fa5b3; font-size:12px; margin-bottom:6px;}
+  #infoPanel .row{font-size:13px; color:#d6d9e2; display:flex; justify-content:space-between;}
+  #infoPanel .bar{height:8px; background:#3a3d46; border-radius:5px; overflow:hidden; margin:4px 0 8px;}
+  #infoPanel .bar i{display:block; height:100%; background:linear-gradient(90deg,#7ed957,#4fc95a);}
+  #infoPanel .btns{display:flex; gap:6px; margin-top:8px;}
+  #infoPanel .btns button{flex:1; font-size:13px; padding:6px 2px;}
+  #upBtn{background:#2f6b3a; border-color:#3f8f4e;}
+  #upBtn:hover{background:#377f44;}
+  #upBtn:disabled{background:#333; border-color:#444; color:#888;}
+  #sellBtn2{background:#6b2f2f; border-color:#8f3f3f;}
+  #sellBtn2:hover{background:#7f3737);}
+
+  /* ===== 遮罩层 ===== */
+  .overlay{
+    position:fixed; inset:0; background:rgba(10,11,15,.82); backdrop-filter:blur(6px);
+    display:flex; align-items:center; justify-content:center; z-index:100;
+  }
+  .panel{
+    background:linear-gradient(180deg,#262933,#1c1e25); border:2px solid #3d414d; border-radius:22px;
+    padding:34px 44px; text-align:center; max-width:640px; box-shadow:0 24px 80px rgba(0,0,0,.6);
+    line-height:1.5;
+  }
+  .panel h1{
+    font-size:40px; letter-spacing:3px; margin-bottom:4px;
+    background:linear-gradient(180deg,#ffe45c,#ffb800); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 3px 0 rgba(0,0,0,.4));
+  }
+  .panel .sub{color:var(--muted); font-size:14px; margin-bottom:22px;}
+  .howto{display:grid; grid-template-columns:1fr 1fr; gap:10px; text-align:left; margin-bottom:24px;}
+  .howto .item{
+    background:#21232c; border:1px solid #3a3e4a; border-radius:12px; padding:10px 12px; font-size:13px; color:#cfd3dd;
+  }
+  .howto .item b{color:var(--yellow); display:block; font-size:14px; margin-bottom:2px;}
+  .howto .item .em{margin-right:6px;}
+  .stats{display:flex; gap:14px; justify-content:center; margin:14px 0 22px; flex-wrap:wrap;}
+  .stats .st{background:#21232c; border-radius:12px; padding:10px 18px; min-width:110px;}
+  .stats .st .v{font-size:24px; font-weight:800; color:var(--yellow);}
+  .stats .st .k{font-size:12px; color:var(--muted);}
+  #best{color:#9fa5b3; font-size:13px; margin-top:14px;}
+  .hidden{display:none !important;}
+  #endTitle.win{background:linear-gradient(180deg,#8ef0a0,#2fbf49); -webkit-background-clip:text; background-clip:text;}
+  #endTitle.lose{background:linear-gradient(180deg,#ff9a9a,#e04545); -webkit-background-clip:text; background-clip:text;}
+  .btnrow{display:flex; gap:12px; justify-content:center;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div class="chip">💰 <span class="big" id="uiMoney">0</span></div>
+    <div class="chip">📦 <span id="uiAmmo">0/24</span></div>
+    <div class="chip">🏚️ <div id="hqHpWrap"><div id="hqHpBar"></div></div> <span id="uiHqHp" style="font-size:12px;color:#cfd3dd"></span></div>
+    <div class="chip" id="uiPhase">第 1 天 · 白天</div>
+    <div style="flex:1"></div>
+    <button id="skipDayBtn">🌙 立即入夜</button>
+    <button id="pauseBtn" title="空格">⏸</button>
+    <button id="speedBtn">▶▶ 1x</button>
+    <button id="soundBtn">🔊</button>
+    <button id="helpBtn">❓</button>
+  </div>
+
+  <div id="main">
+    <canvas id="game" width="780" height="780"></canvas>
+    <div id="banner"><h2></h2><p></p></div>
+    <div id="hint"></div>
+
+    <div id="infoPanel">
+      <h3 id="ipName"></h3>
+      <div class="lv" id="ipLv"></div>
+      <div class="bar"><i id="ipHpBar"></i></div>
+      <div class="row"><span>耐久</span><span id="ipHp"></span></div>
+      <div class="row" id="ipStatRow"><span>属性</span><span id="ipStat"></span></div>
+      <div class="btns">
+        <button id="upBtn">⬆ 升级</button>
+        <button id="sellBtn2">💰 出售</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="buildbar"></div>
+  <div class="tooltip" id="tooltip"></div>
+</div>
+
+<!-- 开始界面 -->
+<div class="overlay" id="startOverlay">
+  <div class="panel">
+    <h1>🐲 奶龙围城</h1>
+    <div class="sub">袋鼠外卖保卫战 · YORG.io 玩法魔改版</div>
+    <div class="howto">
+      <div class="item"><b><span class="em">🏪</span>白天：搞钱</b>在 🍜 外卖商家上建【采集站】，美团袋鼠来回送餐赚取金币，订单送完商家会歇业，记得向外扩张。</div>
+      <div class="item"><b><span class="em">📦</span>弹药后勤</b>塔的子弹靠站点补给：袋鼠会从站点把弹药箱送到缺弹的塔。塔太多补给跟不上会哑火，升级站点可提升产能。</div>
+      <div class="item"><b><span class="em">🌙</span>夜晚：守家</b>奶龙、大笑奶蛙、暴暴龙将从四面八方涌来拆你的建筑（它们最爱啃保温墙）。守住站点！</div>
+      <div class="item"><b><span class="em">👑</span>奶蛙之母</b>每逢第 5 夜，巨型 Boss「奶蛙之母」降临并不断生产小奶蛙。撑过 15 夜即胜利，之后可继续无尽模式。</div>
+    </div>
+    <button class="primary" id="startBtn">开始营业 🛵</button>
+    <div id="best"></div>
+  </div>
+</div>
+
+<!-- 结算界面 -->
+<div class="overlay hidden" id="endOverlay">
+  <div class="panel">
+    <h1 id="endTitle"></h1>
+    <div class="sub" id="endSub"></div>
+    <div class="stats">
+      <div class="st"><div class="v" id="stNight">0</div><div class="k">撑过夜晚</div></div>
+      <div class="st"><div class="v" id="stKills">0</div><div class="k">消灭奶龙</div></div>
+      <div class="st"><div class="v" id="stEarn">0</div><div class="k">累计营收</div></div>
+      <div class="st"><div class="v" id="stBuild">0</div><div class="k">建造建筑</div></div>
+    </div>
+    <div class="btnrow">
+      <button class="primary hidden" id="endlessBtn">继续无尽模式 ∞</button>
+      <button class="primary" id="restartBtn">再来一局</button>
+    </div>
+  </div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>

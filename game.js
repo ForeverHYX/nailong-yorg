@@ -618,6 +618,7 @@ function spawnEnemy(type) {
     slowT: 0, slowF: 0, flash: 0, t: rnd(0, 9),
     tb: null, path: null, pi: 0, repath: rnd(0, 0.3), atkT: 0,
     spawnT: 0.5, spawnTgt: null,
+    skin: type === 'nailong' ? NAILONG_SKINS[irnd(NAILONG_SKINS.length)] : null,
   };
   if (type === 'mother') { e.spawnCd = 4.5; }
   enemies.push(e);
@@ -1172,9 +1173,17 @@ const SPRITE_SRC = {
   nailong: 'assets/nailong.png',
   frog: 'assets/nailaugh.png',
   baoba: 'assets/baoba.png',
-  mother: 'assets/nailaugh.png',
+  mother: 'assets/s_watermelon.png',
   kangaroo: 'assets/kangaroo.png',
+  s_cherry: 'assets/s_cherry.png',
+  s_orange: 'assets/s_orange.png',
+  s_lemon: 'assets/s_lemon.png',
+  s_kiwi: 'assets/s_kiwi.png',
+  s_tomato: 'assets/s_tomato.png',
+  s_peach: 'assets/s_peach.png',
+  s_coconut: 'assets/s_coconut.png',
 };
+const NAILONG_SKINS = ['nailong', 's_cherry', 's_orange', 's_lemon', 's_kiwi', 's_tomato', 's_peach', 's_coconut'];
 function loadSprites() {
   for (const k in SPRITE_SRC) {
     const img = new Image();
@@ -1221,9 +1230,9 @@ function drawCrown(px, py, s) {
   ctx.beginPath(); ctx.arc(0, -2.5, 1.7, 0, TAU); ctx.fill();
   ctx.restore();
 }
-const ENEMY_SPRITE_H = { nailong: T * 1.55, frog: T * 1.5, baoba: T * 1.7, mother: T * 3.6 };
+const ENEMY_SPRITE_H = { nailong: T * 1.7, frog: T * 1.6, baoba: T * 1.9, mother: T * 4.0 };
 function drawEnemySprite(e, px, py, attacking, alphaMul) {
-  const k = e.type === 'mother' ? 'mother' : e.type;
+  const k = e.skin || (e.type === 'mother' ? 'mother' : e.type);
   if (!spriteReady(k)) return false;
   const img = SPRITES[k];
   let h = ENEMY_SPRITE_H[e.type], w = h * img.naturalWidth / img.naturalHeight;

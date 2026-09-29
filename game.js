@@ -442,7 +442,7 @@ function updateCouriers(dt) {
         if (!c.path) {
           if (!requestPath(c, hq.x, hq.y)) { c.mode = 'stuck'; c.resume = 'go'; c.timer = 1.5; }
         } else if (courierMove(c, 1.9, dt) === 'arrived') {
-          const gain = mine.load;
+          const gain = Math.min(mine.load, Math.max(0, mine.stall.amount));
           state.money += gain; state.income += gain;
           mine.stall.amount -= gain;
           floatText('+' + gain + '💰', hq.x + 0.5, hq.y - 0.3, '#ffd100');
@@ -1827,6 +1827,9 @@ function updateHUD() {
   if (hq) {
     el.hqBar.style.width = clamp(hq.hp / hq.maxhp * 100, 0, 100) + '%';
     el.hqHp.textContent = Math.ceil(hq.hp) + '/' + hq.maxhp;
+  } else {
+    el.hqBar.style.width = '0%';
+    el.hqHp.textContent = '已沦陷';
   }
   if (state.phase === 'day') {
     el.phase.textContent = '☀️ 第 ' + state.day + ' 天 · 白天 ' + Math.ceil(state.dayT) + 's' + (state.endless ? ' · 无尽' : ' · ' + state.day + '/' + MAX_NIGHT);
